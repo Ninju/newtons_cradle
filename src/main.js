@@ -5,6 +5,7 @@ var cocos = require('cocos2d'),
 // Import box2d Physics Engine
     box2d = require('box2d');
 
+var PTM_RATIO = 30;
 
 // Create a new layer
 var PhysicsDemo = cocos.nodes.Layer.extend({
@@ -41,7 +42,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
             var body = bodies[i],
                 pos = body.GetPosition(),
                 angle = geo.radiansToDegrees(body.GetAngle());
-            body.sprite.set('position', new geo.Point(pos.x * 30, pos.y * 30));
+            body.sprite.set('position', new geo.Point(pos.x * PTM_RATIO, pos.y * PTM_RATIO));
             body.sprite.set('rotation', angle);
         }
     },
@@ -52,6 +53,9 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
             true                  //allow sleep
         );
         this.set('world', world);
+
+        var director = cocos.Director.get( "sharedDirector" );
+        var winSize  = director.get( "winSize" );
 
         var fixDef = new box2d.b2FixtureDef;
         fixDef.density = 1.0;
@@ -64,7 +68,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
         bodyDef.type = box2d.b2Body.b2_staticBody;
         fixDef.shape = new box2d.b2PolygonShape;
         fixDef.shape.SetAsBox(20, 2);
-        bodyDef.position.Set(10, 400 / 30 + 2);
+        bodyDef.position.Set(10, 400 / PTM_RATIO + 2);
         world.CreateBody(bodyDef).CreateFixture(fixDef);
         bodyDef.position.Set(10, -2);
         world.CreateBody(bodyDef).CreateFixture(fixDef);
@@ -74,11 +78,58 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
         bodyDef.position.Set(22, 13);
         world.CreateBody(bodyDef).CreateFixture(fixDef);
 
+        /* ---------------------------------------------------------
+         * GIRDER
+         * --------------------------------------------------------- */
 
-        //create some objects
+        bodyDef.type = box2d.b2Body.b2_staticBody;
+        bodyDef.position.Set( (winSize.width / 2) / PTM_RATIO, (winSize.height * 4 / 5) / PTM_RATIO );
+
+        fixDef.shape = new box2d.b2PolygonShape;
+        fixDef.shape.SetAsBox( 175 / PTM_RATIO, 39 / PTM_RATIO );
+
+        var girder = cocos.nodes.Sprite.create( { file : "/resources/girder.png" } );
+        girder.set( "position", new geo.Point( bodyDef.position.x * PTM_RATIO, bodyDef.position.y * PTM_RATIO ) );
+        this.addChild( girder );
+
+        girderBody = world.CreateBody( bodyDef );
+        girderBody.CreateFixture( fixDef );
+        this.get( "bodies" ).push( girderBody );
+        girderBody.sprite = girder;
+
+        /* ---------------------------------------------------------
+         * BALLS
+         * --------------------------------------------------------- */
+
+        var ballRadius = 70;
+
         bodyDef.type = box2d.b2Body.b2_dynamicBody;
 
+        fixDef.shape = new box2d.b2CircleShape( (ballRadius / 2) / PTM_RATIO );
+        fixDef.restitution = 1.0;
+        fixDef.density     = 1.0;
+        fixDef.friction    = 1.0;
 
+        var jointDef = new box2d.b2RevoluteJointDef;
+
+        for( i = 0; i < 5; i++ ) {
+          bodyDef.angularDamping = 0.1;
+          bodyDef.bullet = true;
+
+          bodyDef.position.Set( (winSize.width / 4 + (ballRadius + 2) * i) / PTM_RATIO, (winSize.height / 3) / PTM_RATIO );
+          var ball = cocos.nodes.Sprite.create( { file : "/resources/steel_ball_small.png" } );
+          ball.set( "position", new geo.Point( bodyDef.position.x * PTM_RATIO, bodyDef.position.y * PTM_RATIO ) );
+          this.addChild( ball );
+
+          var ballBody = world.CreateBody( bodyDef );
+          ballBody.CreateFixture( fixDef );
+          this.get( "bodies" ).push( ballBody );
+          ballBody.sprite = ball;
+
+          jointDef.Initialize( girderBody, ballBody, new box2d.b2Vec2( ballBody.GetPosition().x, girderBody.GetPosition().y ) );
+
+          world.CreateJoint( jointDef );
+        }
 
 
         /*
@@ -94,7 +145,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
     },
 
     getBodyAtPoint: function (point) {
-        point = new geo.Point(point.x /30, point.y /30);
+        point = new geo.Point(point.x /PTM_RATIO, point.y /PTM_RATIO);
         var world = this.get('world');
         var mousePVec = new box2d.b2Vec2(point.x, point.y);
         var aabb = new box2d.b2AABB();
@@ -132,7 +183,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
                 var md = new box2d.b2MouseJointDef();
                 md.bodyA = world.GetGroundBody();
                 md.bodyB = body;
-                md.target.Set(point.x /30, point.y /30);
+                md.target.Set(point.x /PTM_RATIO, point.y /PTM_RATIO);
                 md.collideConnected = true;
                 md.maxForce = 300.0 * body.GetMass();
                 mouseJoint = world.CreateJoint(md);
@@ -148,7 +199,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
             mouseJoint = this.get('mouseJoint');
 
         if (mouseJoint) {
-            mouseJoint.SetTarget(new box2d.b2Vec2(point.x /30, point.y /30));
+            mouseJoint.SetTarget(new box2d.b2Vec2(point.x /PTM_RATIO, point.y /PTM_RATIO));
         }
     },
 
@@ -171,7 +222,7 @@ var director = cocos.Director.get('sharedDirector');
 // Attach director to our <div> element
 director.attachInView(document.getElementById('cocos2d-app'));
 
-director.set('displayFPS', true);
+director.set('displayFPS', false);
 
 // Create a scene
 var scene = cocos.nodes.Scene.create();
