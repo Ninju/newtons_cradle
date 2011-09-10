@@ -142,8 +142,6 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
           world.CreateJoint( jointDef );
         }
 
-        console.log( cocos.Texture2D );
-
         /*
         //setup debug draw
         var debugDraw = new box2d.b2DebugDraw();
