@@ -41,8 +41,13 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
         for (var i = 0, len = bodies.length; i < len; i++) {
             var body = bodies[i],
                 pos = body.GetPosition(),
-                angle = geo.radiansToDegrees(body.GetAngle());
-            body.sprite.set('position', new geo.Point(pos.x * PTM_RATIO, pos.y * PTM_RATIO));
+                angle = geo.radiansToDegrees(body.GetAngle()),
+                offset = body.sprite.get( "offset" );
+            if( offset ) {
+              body.sprite.set('position', new geo.Point(pos.x * PTM_RATIO + offset.x, pos.y * PTM_RATIO + offset.y));
+            } else {
+              body.sprite.set('position', new geo.Point(pos.x * PTM_RATIO, pos.y * PTM_RATIO));
+            }
             body.sprite.set('rotation', angle);
         }
     },
@@ -56,6 +61,10 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
 
         var director = cocos.Director.get( "sharedDirector" );
         var winSize  = director.get( "winSize" );
+
+        var background = cocos.nodes.Sprite.create( { file : "/resources/background.jpg" } );
+        background.set( "position", geo.ccp( winSize.width / 2, winSize.height / 2 ) );
+        this.addChild( { child : background, z : -1 } );
 
         var fixDef = new box2d.b2FixtureDef;
         fixDef.density = 1.0;
@@ -90,7 +99,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
 
         var girder = cocos.nodes.Sprite.create( { file : "/resources/girder.png" } );
         girder.set( "position", new geo.Point( bodyDef.position.x * PTM_RATIO, bodyDef.position.y * PTM_RATIO ) );
-        this.addChild( girder );
+        this.addChild( { child : girder, z : 1 } );
 
         girderBody = world.CreateBody( bodyDef );
         girderBody.CreateFixture( fixDef );
@@ -101,7 +110,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
          * BALLS
          * --------------------------------------------------------- */
 
-        var ballRadius = 70;
+        var ballRadius = 50;
 
         bodyDef.type = box2d.b2Body.b2_dynamicBody;
 
@@ -116,9 +125,11 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
           bodyDef.angularDamping = 0.1;
           bodyDef.bullet = true;
 
-          bodyDef.position.Set( (winSize.width / 4 + (ballRadius + 2) * i) / PTM_RATIO, (winSize.height / 3) / PTM_RATIO );
-          var ball = cocos.nodes.Sprite.create( { file : "/resources/steel_ball_small.png" } );
+          bodyDef.position.Set( (winSize.width / 3 + (ballRadius + 2) * i) / PTM_RATIO, girderBody.GetPosition().y - 250 / PTM_RATIO);
+          var ball = cocos.nodes.Sprite.create( { file : "/resources/ball_with_string.png" } );
           ball.set( "position", new geo.Point( bodyDef.position.x * PTM_RATIO, bodyDef.position.y * PTM_RATIO ) );
+          ball.set( "offset", { x : 0, y : 100 } );
+
           this.addChild( ball );
 
           var ballBody = world.CreateBody( bodyDef );
@@ -131,6 +142,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
           world.CreateJoint( jointDef );
         }
 
+        console.log( cocos.Texture2D );
 
         /*
         //setup debug draw
