@@ -137,7 +137,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
           this.get( "bodies" ).push( ballBody );
           ballBody.sprite = ball;
 
-          jointDef.Initialize( girderBody, ballBody, new box2d.b2Vec2( ballBody.GetPosition().x, girderBody.GetPosition().y ) );
+          jointDef.Initialize( girderBody, ballBody, new box2d.b2Vec2( ballBody.GetPosition().x, ballBody.GetPosition().y + 125 / PTM_RATIO ) );
 
           world.CreateJoint( jointDef );
         }
