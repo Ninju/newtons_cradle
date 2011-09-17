@@ -8,7 +8,7 @@ var cocos = require('cocos2d'),
 var PTM_RATIO = 30;
 
 // Create a new layer
-var PhysicsDemo = cocos.nodes.Layer.extend({
+var NewtonsCradle = cocos.nodes.Layer.extend({
     world: null,
     bodies: null,
     selectedBody: null,
@@ -16,7 +16,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
 
     init: function() {
         // You must always call the super class version of init
-        PhysicsDemo.superclass.init.call(this);
+        NewtonsCradle.superclass.init.call(this);
 
         this.set('isMouseEnabled', true);
 
@@ -73,20 +73,6 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
 
         var bodyDef = new box2d.b2BodyDef;
 
-        //create ground
-        bodyDef.type = box2d.b2Body.b2_staticBody;
-        fixDef.shape = new box2d.b2PolygonShape;
-        fixDef.shape.SetAsBox(20, 2);
-        bodyDef.position.Set(10, 400 / PTM_RATIO + 2);
-        world.CreateBody(bodyDef).CreateFixture(fixDef);
-        bodyDef.position.Set(10, -2);
-        world.CreateBody(bodyDef).CreateFixture(fixDef);
-        fixDef.shape.SetAsBox(2, 14);
-        bodyDef.position.Set(-2, 13);
-        world.CreateBody(bodyDef).CreateFixture(fixDef);
-        bodyDef.position.Set(22, 13);
-        world.CreateBody(bodyDef).CreateFixture(fixDef);
-
         /* ---------------------------------------------------------
          * GIRDER
          * --------------------------------------------------------- */
@@ -110,7 +96,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
          * BALLS
          * --------------------------------------------------------- */
 
-        var ballRadius = 50;
+        var ballRadius = 40;
 
         bodyDef.type = box2d.b2Body.b2_dynamicBody;
 
@@ -122,13 +108,15 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
         var jointDef = new box2d.b2RevoluteJointDef;
 
         for( i = 0; i < 5; i++ ) {
+          var ball            = cocos.nodes.Sprite.create( { file : "/resources/ball_with_string.png" } );
+          var ballContentSize = ball.get( "contentSize" );
+          ball.set( "position", new geo.Point( bodyDef.position.x * PTM_RATIO, bodyDef.position.y * PTM_RATIO ) );
+          ball.set( "offset", { x : 0, y : (ballContentSize.height - ballRadius) / 2 } );
+
           bodyDef.angularDamping = 0.1;
           bodyDef.bullet = true;
 
-          bodyDef.position.Set( (winSize.width / 3 + (ballRadius + 2) * i) / PTM_RATIO, girderBody.GetPosition().y - 250 / PTM_RATIO);
-          var ball = cocos.nodes.Sprite.create( { file : "/resources/ball_with_string.png" } );
-          ball.set( "position", new geo.Point( bodyDef.position.x * PTM_RATIO, bodyDef.position.y * PTM_RATIO ) );
-          ball.set( "offset", { x : 0, y : 100 } );
+          bodyDef.position.Set( (winSize.width / 3 + (ballRadius + 2) * i) / PTM_RATIO, girderBody.GetPosition().y - ballContentSize.height / PTM_RATIO);
 
           this.addChild( ball );
 
@@ -137,7 +125,7 @@ var PhysicsDemo = cocos.nodes.Layer.extend({
           this.get( "bodies" ).push( ballBody );
           ballBody.sprite = ball;
 
-          jointDef.Initialize( girderBody, ballBody, new box2d.b2Vec2( ballBody.GetPosition().x, ballBody.GetPosition().y + 125 / PTM_RATIO ) );
+          jointDef.Initialize( girderBody, ballBody, new box2d.b2Vec2( ballBody.GetPosition().x, ballBody.GetPosition().y + (ballContentSize.height / 2) / PTM_RATIO ) );
 
           world.CreateJoint( jointDef );
         }
@@ -238,7 +226,7 @@ director.set('displayFPS', false);
 var scene = cocos.nodes.Scene.create();
 
 // Add our layer to the scene
-scene.addChild({child: PhysicsDemo.create()});
+scene.addChild({child: NewtonsCradle.create()});
 
 // Run the scene
 director.runWithScene(scene);
